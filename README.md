@@ -1,10 +1,12 @@
 # Results workaround
 
-There are 3 separate python scripts to run optionally.
+There are 3 separate main python scripts to run optionally.
 
 1. run_pipeline.py --> process the datasets
 2. run_create_plots.py --> process the datasets, create plots, and save them into the "plots" folder
 3. run_pipeline_model.py --> process the datasets, run the model, and save the model and the interactive maps into the "model" folder
+
+FastAPI and Docker scripts are in "app" folder.
 
 In our case, in order to save the boxplot and run the Docker, we also had to install these libraries:
 
