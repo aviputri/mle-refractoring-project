@@ -6,6 +6,15 @@ There are 3 separate python scripts to run optionally.
 2. run_create_plots.py --> process the datasets, create plots, and save them into the "plots" folder
 3. run_pipeline_model.py --> process the datasets, run the model, and save the model and the interactive maps into the "model" folder
 
+In our case, in order to save the boxplot and run the Docker, we also had to install these libraries:
+
+```
+uv add fastapi uvicorn psycopg
+uv run plotly_get_chrome
+uv pip install kaleido
+uv add "psycopg[binary]"
+```
+
 # Refactoring Project
 
 Use this repository as a **template** for your refactoring project. It walks you through turning a working but messy notebook into clean, reusable Python code: the notebook analyzes King County house sales, and your job is to extract its data cleaning and feature engineering logic into a proper pipeline. Create pull requests in your own copy even if you are working alone, and use them to track your progress.
