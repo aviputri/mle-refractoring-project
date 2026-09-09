@@ -1,6 +1,7 @@
 #%%
 """Cleaning the data from 'King_County_House_prices_dataset.csv"""
 
+from math import dist
 from pathlib import Path
 from matplotlib.pylab import poly
 import matplotlib.pyplot as plt
@@ -13,10 +14,10 @@ from sklearn.linear_model import ElasticNet, LinearRegression
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+ 
 
 # Load the dataset with pandas
-#kc_data = pd.read_csv("data/King_County_House_prices_dataset.csv")
-kc_data = pd.read_csv("~/Documents/Courses/AIEng/project01/mle-refractoring-project/data/King_County_House_prices_dataset.csv")
+kc_data = pd.read_csv("../data/King_County_House_prices_dataset.csv")
 
 # kc_data.head()
 
@@ -98,6 +99,7 @@ def add_column(df, column_name=str):
     df[column_name] = (df.price / (df.sqft_living + df.sqft_lot)).round(2)
     return df
 
+# This helper function calculates the distance between one house and a reference location.
 def dist(long, lat, ref_long, ref_lat):
     """dist computes the distance in km to a reference location.
     Input: long and lat of the location of interest and ref_long and ref_lat
@@ -179,6 +181,85 @@ kc_data_copy = kc_data.copy()
 # bed-bath ratio outliers
 kc_data_copy = bath_bed_ratio_outlier(kc_data_copy)
 
+#%% center and water distance
+
+# center distance
+wealth_center = (47.62774, -122.24194)
+
+# Absolute difference in latitude between the center and the property.
+kc_data["delta_lat"] = np.absolute(wealth_center[0] - kc_data["lat"])
+# Absolute difference in longitude between the center and the property.
+kc_data["delta_long"] = np.absolute(wealth_center[1] - kc_data["long"])
+# Distance between the center and the property.
+kc_data["center_distance"] = (
+    (
+        (kc_data["delta_long"] * np.cos(np.radians(47.6219))) ** 2
+        + kc_data["delta_lat"] ** 2
+    )
+    ** (1 / 2)
+    * 2
+    * np.pi
+    * 6378
+    / 360
+)
+
+# water distance
+water_distance = []
+# Add all waterfront houses to the reference list.
+water_list = kc_data.query("waterfront == 1")
+# For each row, calculate the distance to the nearest waterfront house.
+for idx in kc_data_copy.index:
+    ref_list = []
+    for x, y in zip(list(water_list["long"]), list(water_list["lat"])):
+        ref_list.append(dist(kc_data_copy["long"][idx], kc_data_copy["lat"][idx], x, y).min())
+    water_distance.append(min(ref_list))
+
+# Create a new column from the previously computed list.
+kc_data_copy["water_distance"] = water_distance
+
+# Create a new column from the previously computed list.
+kc_data_copy.describe().round(2)
+
+#%%
+#create plots and save them to the plots folder
+
+#Histograms
+# Select variables for a closer visual inspection.
+columns_histogram = ["price","bathrooms","bedrooms","floors","grade","last_known_change","sqft_living","sqft_lot"]
+kc_data_copy[columns_histogram].hist(bins=50, figsize=(20, 15))
+plt.savefig("../plots/01_histograms.png", dpi=300, bbox_inches="tight")
+
+#Box plots
+fig = px.box(kc_data, y="price", labels={"price": "House Price in $"})
+#fig.write_image("../plots/02_price_boxplot.png", width=800, height=600) #still resolving the issue
+
+# Plot scatterplots.
+grid = sns.pairplot(kc_data[columns_histogram])
+grid.savefig("../plots/03_pairplot.png", dpi=300)
+
+# Heatmap of the Pearson correlation coefficients
+numeric_kc_data = kc_data.select_dtypes(include=["number"])
+mask = np.triu(numeric_kc_data.corr())
+plt.figure(figsize=(20, 15))
+ax = sns.heatmap(round(numeric_kc_data.corr(), 2), annot=True, mask=mask, cmap="RdBu_r")
+ax.figure.savefig("../plots/04_correlation_heatmap.png", dpi=300, bbox_inches="tight")
+
+# Scatter plot: price versus distance to the center.
+scatter = sns.relplot(y="price", x="center_distance", data=kc_data);
+scatter.savefig("../plots/05_scatterplot.png", dpi=300, bbox_inches="tight");
+
+# Scatter plot: price per square foot versus distance to the center.
+sqft_scatter = sns.relplot(y="sqft_price", x="center_distance", data=kc_data);
+sqft_scatter.savefig("../plots/06_sqft_scatterplot.png", dpi=300, bbox_inches="tight");
+
+price_water =sns.relplot(y="price", x="water_distance", data=kc_data);
+price_water.savefig("../plots/07_price_water_distance.png", dpi=300, bbox_inches="tight");
+
+sqft_water = sns.relplot(y="sqft_price", x="water_distance", data=kc_data);
+sqft_water.savefig("../plots/08_sqft_water_distance.png", dpi=300, bbox_inches="tight");
+
+
+#%%
 # recalculate sqft_basement
 kc_data_copy = sqft_basement(kc_data_copy)
 
