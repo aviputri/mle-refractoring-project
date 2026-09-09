@@ -1,3 +1,11 @@
+# Results workaround
+
+There are 3 separate python scripts to run optionally.
+
+1. run_pipeline.py --> process the datasets
+2. run_create_plots.py --> process the datasets, create plots, and save them into the "plots" folder
+3. run_pipeline_model.py --> process the datasets, run the model, and save the model and the interactive maps into the "model" folder
+
 # Refactoring Project
 
 Use this repository as a **template** for your refactoring project. It walks you through turning a working but messy notebook into clean, reusable Python code: the notebook analyzes King County house sales, and your job is to extract its data cleaning and feature engineering logic into a proper pipeline. Create pull requests in your own copy even if you are working alone, and use them to track your progress.
@@ -118,3 +126,4 @@ The [bonus_solution/](bonus_solution/) folder contains a minimal working example
 - a `docker-compose.yaml` file to run the API and database together
 
 It is included as a reference implementation for the optional stretch task, not as a required project structure.
+
