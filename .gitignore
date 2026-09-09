@@ -170,4 +170,4 @@ cython_debug/
 Thumbs.db
 
 # Model files
-model/
+#model/
