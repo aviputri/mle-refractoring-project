@@ -1,4 +1,4 @@
-"""Die Datenaufbereitung ohne Notebook starten. Modelle vergleichen. Ergebnisse speichern"""
+"""Start data processing without Notebook. Compare models. Save results" starten."""
 
 from datetime import datetime
 from pathlib import Path
@@ -17,23 +17,23 @@ def main() -> None:
     csv_path = (
         project_dir / "data" / "King_County_House_prices_dataset.csv"
     )
-    print("1/7: Daten laden und aufbereiten ...", flush=True)
+    print("1/7: Loading and processing Data ...", flush=True)
     raw = load_data(csv_path)
     prepared = prepare_data(raw)
-    assert not prepared.empty, "Keine Daten uebrig"
-    assert prepared.isna().sum().sum() == 0, "Fehlende Werte"
+    assert not prepared.empty, "No Data left to process"
+    assert prepared.isna().sum().sum() == 0, "Missing values"
     ratio = prepared["bathrooms"] / prepared["bedrooms"]
     assert ratio.between(0.10, 2, inclusive="neither").all()
-    print("Rohdaten:", raw.shape, "Aufbereitet:", prepared.shape)
+    print("Raw data:", raw.shape, "Processed Data:", prepared.shape)
 
-    print("2/7: Features und Train/Test-Split ...", flush=True)
+    print("2/7: Features and Train/Test-Split ...", flush=True)
     X, y = select_features_target(prepared)
     assert "price" not in X and "sqft_price" not in X
     X_train, X_test, y_train, y_test = split_data(X, y)
     print("Train:", X_train.shape, "Test:", X_test.shape)
     scores = []
 
-    print("3/7: Zwei lineare Baselines trainieren ...", flush=True)
+    print("3/7: Training two linear Baselines ...", flush=True)
     for features in [["grade"], ["grade", "last_known_change"]]:
         model = train_linear_model(X_train, y_train, features)
         metrics = evaluate_model(
@@ -41,7 +41,7 @@ def main() -> None:
         )
         scores.append({"model": "linear: " + "+".join(features), **metrics})
 
-    print("4/7: Polynommodell trainieren ...", flush=True)
+    print("4/7: Training polynomial model ...", flush=True)
     X_train_model = X_train.drop(columns=["id"])
     X_test_model = X_test.drop(columns=["id"])
     polynomial = train_polynomial_model(X_train_model, y_train)
@@ -52,17 +52,17 @@ def main() -> None:
         X_test, y_test, polynomial.predict(X_test_model)
     )
 
-    print("5/7: ElasticNet-Suche; bitte warten ...", flush=True)
+    print("5/7: ElasticNet-Search; please wait ...", flush=True)
     search = train_elastic_model(X_train_model, y_train)
     elastic = search.best_estimator_
-    print("Beste Parameter:", search.best_params_)
-    print("Mittleres CV-R2:", round(search.best_score_, 3))
+    print("Best parameter:", search.best_params_)
+    print("Mean Cross-Validation R2:", round(search.best_score_, 3))
     metrics = evaluate_model(elastic, X_test_model, y_test)
     scores.append({"model": "elastic", **metrics})
-    print("Erste Koeffizienten:")
+    print("First coefficient:")
     print(elastic.named_steps["model"].regressor_.coef_[:5])
 
-    print("6/7: Fehler und Modellvergleich ...", flush=True)
+    print("6/7: Error und model comparison ...", flush=True)
     elastic_errors = build_error_table(
         X_test, y_test, elastic.predict(X_test_model)
     )
@@ -71,10 +71,10 @@ def main() -> None:
     for name, errors in [
         ("polynomial", polynomial_errors), ("elastic", elastic_errors)
     ]:
-        print("Groesste relative Ueberschaetzung:", name)
+        print("Biggest relative overestimation:", name)
         print(errors.loc[[errors["price_difference_percent"].idxmax()]])
 
-    print("7/7: Ergebnisse speichern ...", flush=True)
+    print("7/7: Saving results ...", flush=True)
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     output_dir = project_dir / "model" / ("training_" + stamp)
     output_dir.mkdir(parents=True, exist_ok=False)
@@ -89,7 +89,7 @@ def main() -> None:
         output_dir / "feature_columns.csv", index=False
     )
 
-    print("Training abgeschlossen. Ergebnisse:", output_dir)
+    print("Training completed. Results:", output_dir)
 
 
 if __name__ == "__main__":
